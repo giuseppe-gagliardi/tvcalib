@@ -8,8 +8,13 @@ num_points_circles=8
 
 
 num_points_lines=4
+echo "Running w14"
 python -m sn_segmentation.src.custom_extremities -s $DATASET_PATH -p $OUTPUT_DIR --checkpoint $CKPT --num_points_lines $num_points_lines --num_points_circles $num_points_circles --split wc14-test
+
+echo "Running sncalib valid"
 python -m sn_segmentation.src.custom_extremities -s $DATASET_PATH -p $OUTPUT_DIR --checkpoint $CKPT --num_points_lines $num_points_lines --num_points_circles $num_points_circles --split sncalib-valid
+
+echo "Running sncalib test"
 python -m sn_segmentation.src.custom_extremities -s $DATASET_PATH -p $OUTPUT_DIR --checkpoint $CKPT --num_points_lines $num_points_lines --num_points_circles $num_points_circles --split sncalib-test
 
 

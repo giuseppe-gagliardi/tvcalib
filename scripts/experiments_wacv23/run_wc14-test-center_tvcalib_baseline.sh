@@ -8,9 +8,9 @@ HEIGHT=720
 
 # ################################## TVCALIB ##################################
 TAUS=(inf 0.019)
-
+echo "PART1: TVCALIB"
 CONFIG_FILE_PREFIX="extrem-gt"
-python -m tvcalib.optimize --output_dir $SAVE_DIR --hparams configs/wc14-test/$CONFIG_FILE_PREFIX.json
+python -m tvcalib.optimize --output_dir $SAVE_DIR --hparams configs/wc14-test/$CONFIG_FILE_PREFIX.json 
 python -m evaluation.eval_projection --dir_dataset $DATASET_DIR --width $WIDTH --height $HEIGHT --per_sample_output $SAVE_DIR/$CONFIG_FILE_PREFIX/per_sample_output.json --project_from Camera --taus $TAUS --evaluate_3d --evaluate_2d
 
 CONFIG_FILE_PREFIX="extrem-pred"
@@ -19,7 +19,7 @@ python -m evaluation.eval_projection --dir_dataset $DATASET_DIR --width $WIDTH -
 
 
 # ################################## Baseline: Homography from Line Correspondences ##################################
-
+echo "PART2: BASELINE"
 # GT Annotations
 PREFIX="Hline-extrem-gt"
 python scripts/baseline_homography_from_line_correspondences.py --extremities $DATASET_DIR --extremities_prefix "" --output_dir $SAVE_DIR/$PREFIX --width $WIDTH --height $HEIGHT
