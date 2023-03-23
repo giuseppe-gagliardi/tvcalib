@@ -3,11 +3,14 @@ nfs/*
 experiments*/*
 results/*
 *.backup*/
+tmp/*
 
 *.jpg
 *.png
 *.pt
 *.pdf
+*.mp4
+*.csv
 *.svg
 *.out
 # *.json
