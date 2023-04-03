@@ -34,6 +34,50 @@ from results_presentation import overlap_inout
 import os
 import cv2 as cv
 
+def save_frames(video_path, output_dir, save=False):
+    # Open the video file for reading
+    video = cv.VideoCapture(video_path)
+
+    # Create the output directory if it doesn't exist
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Initialize frame counter
+    if  save:
+        frame_count = 0
+    else: 
+        frames = []
+        
+    # Loop through all frames in the video
+    while True:
+        # Read the next frame from the video
+        ret, frame = video.read()
+
+        # If we reached the end of the video, exit the loop
+        if not ret:
+            break
+        if save == True:
+            # Save the current frame as a PNG image with an incremental filename
+            filename = f"{frame_count:05d}.png"
+            output_path = os.path.join(output_dir, filename)
+            cv.imwrite(output_path, frame)
+            # Increment the frame counter
+            frame_count += 1
+        else:
+            frames.append(frame)
+
+    # Release the video object and print a message
+    video.release()
+    if not save:
+        return frames
+
+def find_mp4_files(directory):
+    mp4_files = []
+    for file in os.listdir(directory):
+        if file.endswith(".mp4"):
+            mp4_files.append(file)
+    return mp4_files
+
 def convert_to_mp4(dir_path, output_file='output.mp4', fps=25.0, res_width=1120, res_height=540, extention='.png'):
     # Define the codec and create VideoWriter object
     fourcc = cv.VideoWriter_fourcc(*'mp4v')
@@ -43,7 +87,7 @@ def convert_to_mp4(dir_path, output_file='output.mp4', fps=25.0, res_width=1120,
     nr_frames = len([f for f in os.listdir(dir_path) if f.endswith(extention)])
     # Iterate over frames and write them to video
     for i in range(1,nr_frames+1):
-        filename = "{:04d}".format(i)+extention
+        filename = "{:05d}".format(i)+extention
         frame_path = os.path.join(dir_path, filename)
         frame = cv.imread(frame_path)
         print(filename, end='\r')
@@ -52,8 +96,8 @@ def convert_to_mp4(dir_path, output_file='output.mp4', fps=25.0, res_width=1120,
 
 
 args = Namespace(
-        images_path=Path("data/datasets/demo/int_shk_010620_010640"),
-        output_dir=Path("tmp/demo/int_shk_010620_010640"),
+        images_path=Path("data/datasets/demo/prova"),
+        output_dir=Path("tmp/demo/prova"),
         checkpoint="data/segment_localization/train_59.pt",
         gpu=True,
         nworkers=16,
@@ -64,9 +108,23 @@ args = Namespace(
         optim_steps=2000,
         lens_dist=False,
         write_masks=False,
+        video_input=True,
         video_output=True
     )
 device = "cuda" if args.gpu and torch.cuda.is_available() else "cpu"
+
+input_images = []
+# Example usage:
+if args.video_input:
+    directory = args.images_path
+    mp4_files = find_mp4_files(directory)
+    for video in mp4_files:
+        video_path = os.path.join(directory,video)
+        #input_images = save_frames(video_path, args.output_dir)
+        save_frames(video_path, directory, True)
+        input_images = args.images_path
+else: 
+    input_images = args.images_path
 
 object3d = SoccerPitchLineCircleSegments(
     device=device, base_field=SoccerPitchSNCircleCentralSplit()
@@ -83,7 +141,7 @@ fn_generate_class_synthesis = partial(generate_class_synthesis, radius=4)
 fn_get_line_extremities = partial(get_line_extremities, maxdist=30, width=455, height=256, num_points_lines=4, num_points_circles=8)
 
 dataset_seg = InferenceDatasetSegmentation(
-    args.images_path, args.image_width, args.image_height
+    input_images, args.image_width, args.image_height
 )
 print("number of images:", len(dataset_seg))
 dataloader_seg = torch.utils.data.DataLoader(
@@ -182,7 +240,7 @@ for sample in df.iloc:
 
     image_id = Path(sample.image_id).stem
     #print(f"{image_id=}")
-    image = Image.open(args.images_path / sample.image_id).convert("RGB")
+    image = Image.open(input_images / sample.image_id).convert("RGB")
     image = T.functional.to_tensor(image)
 
     cam = get_camera_from_per_sample_output(sample, args.lens_dist)

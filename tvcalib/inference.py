@@ -86,7 +86,7 @@ class InferenceSegmentationModel:
         self.model = deeplabv3_resnet101(
             num_classes=len(SoccerPitch.lines_classes) + 1, aux_loss=True
         )
-        self.model.load_state_dict(torch.load(checkpoint)["model"], strict=False)
+        self.model.load_state_dict(torch.load(checkpoint, map_location=device)["model"], strict=False)
         self.model.to(self.device)
         self.model.eval()
 
@@ -97,7 +97,7 @@ class InferenceSegmentationModel:
 class InferenceDatasetSegmentation(torch.utils.data.Dataset):
     def __init__(
         self,
-        images_path,
+        images,
         image_width,
         image_height,
         allowed_image_ext=set([".jpg", ".jpeg", ".png"]),
@@ -112,9 +112,10 @@ class InferenceDatasetSegmentation(torch.utils.data.Dataset):
         )
         self.width = image_width
         self.height = image_height
-        self.image_files = [
-            f for f in Path(images_path).glob("**/*") if f.suffix in allowed_image_ext
-        ]
+        if isinstance(images,list):
+            self.image_files = images
+        else: 
+            self.image_files = [ f for f in Path(images).glob("**/*") if f.suffix in allowed_image_ext ]
 
     def __getitem__(self, idx):
         image = Image.open(self.image_files[idx]).convert("RGB")
